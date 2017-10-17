@@ -3,4 +3,5 @@ kind: ConfigMap
 metadata:
   name: eventrouter-config
 data:
-  config.json: {"sink":"glog"}
+  config.json: |
+    {"sink":"glog"}
