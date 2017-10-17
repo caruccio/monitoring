@@ -89,8 +89,6 @@ objects:
           - mountPath: /var/lib/grafana
             name: grafana-data-volume
         dnsPolicy: ClusterFirst
-        nodeSelector:
-          role: infra
         restartPolicy: Always
         terminationGracePeriodSeconds: 30
         volumes:

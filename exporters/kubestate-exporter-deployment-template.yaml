@@ -63,8 +63,6 @@ objects:
             requests:
               cpu: 10m
               memory: 128Mi
-        nodeSelector:
-          role: infra
         restartPolicy: Always
         serviceAccount: prometheus
         serviceAccountName: prometheus

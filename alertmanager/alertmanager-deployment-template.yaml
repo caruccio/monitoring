@@ -68,8 +68,6 @@ objects:
           - mountPath: /etc/prometheus
             name: prom-alertmanager
         dnsPolicy: ClusterFirst
-        nodeSelector:
-          role: infra
         restartPolicy: Always
         terminationGracePeriodSeconds: 30
         volumes:

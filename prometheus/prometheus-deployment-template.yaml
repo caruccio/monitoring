@@ -78,8 +78,6 @@ objects:
           - mountPath: /etc/prometheus
             name: prom-k8s
         dnsPolicy: ClusterFirst
-        nodeSelector:
-          role: infra
         restartPolicy: Always
         serviceAccount: prometheus
         serviceAccountName: prometheus
