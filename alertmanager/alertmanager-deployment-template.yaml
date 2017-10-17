@@ -52,6 +52,7 @@ objects:
           image: quay.io/prometheus/alertmanager:${ALERTMANAGER_IMAGE_VERSION}
           args:
             - -config.file=/etc/prometheus/alertmanager.yml
+            - -storage.path=/data
           imagePullPolicy: IfNotPresent
           name: prometheus
           ports:
@@ -65,6 +66,8 @@ objects:
               cpu: 10m
               memory: 256Mi
           volumeMounts:
+          - mountPath: /data
+            name: alertmanager-data
           - mountPath: /etc/prometheus
             name: prom-alertmanager
         dnsPolicy: ClusterFirst
@@ -75,5 +78,22 @@ objects:
             defaultMode: 420
             name: prom-alertmanager
           name: prom-alertmanager
+        - name: alertmanager-data
+          persistentVolumeClaim:
+            claimName: alertmanager-data
     triggers:
     - type: ConfigChange
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      app: alertmanager
+    name: alertmanager-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 200Gi
+    storageClassName: gp2

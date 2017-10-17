@@ -104,6 +104,5 @@ objects:
     - ReadWriteOnce
     resources:
       requests:
-        storage: 200Gi
+        storage: 20Gi
     storageClassName: gp2
-
