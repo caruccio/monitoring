@@ -26,6 +26,7 @@ oadm new-project $NS --node-selector 'role=app'
 Setup security policies.
 
 ```
+oc -n $NS create -f configs/rbac.yaml
 oc -n $NS adm policy add-cluster-role-to-user eventrouter-exporter -z eventrouter-exporter
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z kubestate-exporter
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
@@ -72,7 +73,7 @@ oc -n $NS process -o yaml -f exporters/cloudwatch-exporter-deployment-template.y
     -p AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     | oc -n $NS create -f -
 
-oc -n $NS process -o yaml -f exporters/eventrouter-deployment-template.yaml \
+oc -n $NS process -o yaml -f exporters/eventrouter-exporter-deployment-template.yaml \
     | oc -n $NS create -f -
 
 oc -n $NS process -o yaml -f alertmanager/alertmanager-deployment-template.yaml \
