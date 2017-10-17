@@ -89,6 +89,7 @@ objects:
   metadata:
     annotations:
       app: alertmanager
+      snapshot: "false"
     name: alertmanager-data
   spec:
     accessModes:

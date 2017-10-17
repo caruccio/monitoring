@@ -18,7 +18,7 @@ objects:
   metadata:
     name: prom-k8s
   data:
-    docker.rules: |
+    docker.rules: |-
       ALERT DockerHasErrors
         IF irate(kubelet_docker_operations_errors{operation_type!~"remove_container|start_container|inspect_container|inspect_image|inspect_exec|operation_type||logs"}[10m])  > 0
         FOR 5m
@@ -214,7 +214,7 @@ objects:
         histogram_quantile(0.5,sum by (le,cluster) (scheduler_binding_latency_microseconds_bucket)) / 1e6
 
       ALERT K8SFailedSchedulingErrorTooHigh
-        IF sum(rate(heptio_eventrouter_warnings_total{reason="FailedScheduling"}[5m]) > 0.1
+        IF sum(rate(heptio_eventrouter_warnings_total{reason="FailedScheduling"}[5m])) > 0.1
         FOR 5m
         LABELS {
           cluster = "${CLUSTER_NAME}",
@@ -413,7 +413,7 @@ objects:
           description = "Kubelet {{$labels.instance}} is running {{$value}} pods",
         }
 
-    node.rules: |
+    node.rules: |-
       ALERT MasterCPUUsage
         IF ((1 - (avg(irate(node_cpu{mode="idle", role="master"}[5m])) BY (instance))) * 100) > 85
         FOR 10m
@@ -561,7 +561,7 @@ objects:
       #  }
 
 
-    prometheus.yml: |
+    prometheus.yml: |-
       global:
         scrape_interval: 30s
         scrape_timeout: 30s
