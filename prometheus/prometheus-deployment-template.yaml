@@ -92,3 +92,18 @@ objects:
             claimName: prometheus-data
     triggers:
     - type: ConfigChange
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      app: prometheus
+    name: prometheus-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 200Gi
+    storageClassName: gp2
+
