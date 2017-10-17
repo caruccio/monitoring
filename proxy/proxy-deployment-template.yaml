@@ -6,6 +6,8 @@ metadata:
 parameters:
 - name: APPS_DOMAIN
   required: true
+- name: PROXY_DEFAULT_ADMIN_PASSWORD
+  required: true
 
 objects:
 - apiVersion: v1
@@ -93,6 +95,8 @@ objects:
           - name: PROXY_ROUTE_TO_SERVICE
             # Space separated list of "<fqdn>,<service-name:service-port>" mapping
             value: "prometheus.${APPS_DOMAIN},prometheus:9090 alertmanager.${APPS_DOMAIN},alertmanager:9093"
+          - name: PROXY_DEFAULT_ADMIN_PASSWORD
+            value: ${PROXY_DEFAULT_ADMIN_PASSWORD}
           image: getupcloud/nginx-proxy:latest
           imagePullPolicy: IfNotPresent
           name: proxy

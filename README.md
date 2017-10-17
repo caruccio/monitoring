@@ -1,9 +1,10 @@
 Prepare some env vars t use on templates.
 
 ```
-export ROUTER_BASIC_USERNAME=`oc env --list dc/router -n default |grep STATS_USERNAME  | cut -f 2 -d=`
-export ROUTER_BASIC_PASSWORD=`oc env --list dc/router -n default |grep STATS_PASSWORD  | cut -f 2 -d=`
-export PROXY_ADMIN_HTPASSWD_HASH=`htpasswd -n -i admin <<<admin | grep .`
+export ROUTER_BASIC_USERNAME=`oc env --list dc/router -n default | grep STATS_USERNAME  | cut -f 2 -d=`
+export ROUTER_BASIC_PASSWORD=`oc env --list dc/router -n default | grep STATS_PASSWORD  | cut -f 2 -d=`
+export PROXY_DEFAULT_ADMIN_PASSWORD=`openssl rand -base64 9`
+export PROXY_ADMIN_HTPASSWD_HASH=`htpasswd -n -i admin <<<${PROXY_DEFAULT_ADMIN_PASSWORD} | grep .`
 export CLUSTER_NAME=$YOUR_CLUSTER_NAME
 export APPS_DOMAIN=$YOU_APPS_DOMAIN
 
@@ -31,26 +32,26 @@ oc -n $NS adm policy add-cluster-role-to-user eventrouter-exporter -z eventroute
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z kubestate-exporter
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
 oc -n default adm policy add-scc-to-user privileged -z node-exporter
-oc -n $NS adm policy add-scc-to-user privileged -z alertmanager
+oc -n $NS adm policy add-scc-to-user privileged -z grafana
 ```
 
 Create config files
 
 ```
 oc -n $NS process -o yaml -f configs/alertmanager-config-template.yaml \
-    -p PAGERDUTY_GENERIC_API_KEY=$PAGERDUTY_GENERIC_API_KEY \
-    -p SLACK_HOOK_URL=$SLACK_HOOK_URL \
-    -p SLACK_CHANNEL=$SLACK_CHANNEL \
+    -p "PAGERDUTY_GENERIC_API_KEY=$PAGERDUTY_GENERIC_API_KEY" \
+    -p "SLACK_HOOK_URL=$SLACK_HOOK_URL" \
+    -p "SLACK_CHANNEL=$SLACK_CHANNEL" \
     | oc -n $NS create -f -
 
 oc -n $NS process -o yaml -f configs/prometheus-config-template.yaml \
-    -p CLUSTER_NAME=$CLUSTER_NAME \
-    -p ROUTER_BASIC_USERNAME=$ROUTER_BASIC_USERNAME \
-    -p ROUTER_BASIC_PASSWORD=$ROUTER_BASIC_PASSWORD \
+    -p "CLUSTER_NAME=$CLUSTER_NAME" \
+    -p "ROUTER_BASIC_USERNAME=$ROUTER_BASIC_USERNAME" \
+    -p "ROUTER_BASIC_PASSWORD=$ROUTER_BASIC_PASSWORD" \
     | oc -n $NS create -f -
 
 oc -n $NS process -o yaml -f configs/proxy-config-template.yaml \
-    -p 'PROXY_ADMIN_HTPASSWD_HASH=$PROXY_ADMIN_HTPASSWD_HASH' \
+    -p "PROXY_ADMIN_HTPASSWD_HASH=$PROXY_ADMIN_HTPASSWD_HASH" \
     | oc -n $NS create -f -
 
 oc -n $NS process -o yaml -f configs/grafana-config-template.yaml \
@@ -89,5 +90,8 @@ oc -n $NS process -o yaml -f grafana/grafana-deployment-template.yaml \
 
 oc -n $NS process -o yaml -f proxy/proxy-deployment-template.yaml \
     -p APPS_DOMAIN=${APPS_DOMAIN} \
+    -p "PROXY_DEFAULT_ADMIN_PASSWORD=$PROXY_DEFAULT_ADMIN_PASSWORD" \
     | oc -n $NS create -f -
+
+oc label --list dc/proxy | grep PROXY_DEFAULT_ADMIN_PASSWORD
 ```
