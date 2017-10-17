@@ -20,7 +20,7 @@ export NS=monitoring
 Create a project in order to isolate the components. Change `--node-selector` for your needs.
 
 ```
-oadm new-project $NS --node-selector 'role=app'
+oc adm new-project $NS --node-selector 'role=app'
 ```
 
 Setup security policies.
@@ -31,6 +31,7 @@ oc -n $NS adm policy add-cluster-role-to-user eventrouter-exporter -z eventroute
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z kubestate-exporter
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
 oc -n default adm policy add-scc-to-user privileged -z node-exporter
+oc -n $NS adm policy add-scc-to-user privileged -z alertmanager
 ```
 
 Create config files

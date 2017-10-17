@@ -90,6 +90,8 @@ objects:
             name: grafana-data
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        serviceAccount: grafana
+        serviceAccountName: grafana
         terminationGracePeriodSeconds: 30
         volumes:
         - name: grafana-data
