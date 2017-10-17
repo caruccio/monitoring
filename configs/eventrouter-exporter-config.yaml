@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: eventrouter-config
+  name: eventrouter-exporter-config
 data:
   config.json: |
     {"sink":"glog"}

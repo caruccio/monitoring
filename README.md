@@ -26,8 +26,9 @@ oadm new-project $NS --node-selector 'role=app'
 Setup security policies.
 
 ```
-oc -n $NS adm policy add-cluster-role-to-user eventrouter   -z eventrouter
-oc -n $NS adm policy add-cluster-role-to-user cluster-admin -z prometheus
+oc -n $NS adm policy add-cluster-role-to-user eventrouter-exporter -z eventrouter-exporter
+oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
+oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z kubestate-exporter
 oc -n $NS adm policy add-scc-to-user          privileged    -z prometheus-node-exporter
 ```
 

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: eventrouter-deployment-template
+  name: eventrouter-exporter-deployment-template
 
 parameters:
 - name: EVENTROUTER_IMAGE_VERSION
@@ -13,21 +13,21 @@ objects:
   metadata:
     annotations:
       prometheus.io/scrape: "true"
-    name: eventrouter
+    name: eventrouter-exporter
   spec:
     ports:
     - port: 8080
       protocol: TCP
       targetPort: 8080
     selector:
-      app: eventrouter
+      app: eventrouter-exporter
     sessionAffinity: None
     type: ClusterIP
 
 - apiVersion: v1
   kind: ClusterRole
   metadata:
-    name: eventrouter
+    name: eventrouter-exporter
   rules:
   - apiGroups:
     - ""
@@ -42,16 +42,16 @@ objects:
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: eventrouter
+    name: eventrouter-exporter
 
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
-    name: eventrouter
+    name: eventrouter-exporter
   spec:
     replicas: 1
     selector:
-      app: eventrouter
+      app: eventrouter-exporter
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -66,12 +66,12 @@ objects:
       metadata:
         creationTimestamp: null
         labels:
-          app: eventrouter
+          app: eventrouter-exporter
       spec:
         containers:
         - image: gcr.io/heptio-images/eventrouter:${EVENTROUTER_IMAGE_VERSION}
           imagePullPolicy: IfNotPresent
-          name: kube-eventrouter
+          name: eventrouter
           resources:
             limits:
               cpu: 100
@@ -87,13 +87,13 @@ objects:
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         schedulerName: default-scheduler
-        serviceAccount: eventrouter
-        serviceAccountName: eventrouter
+        serviceAccount: eventrouter-exporter
+        serviceAccountName: eventrouter-exporter
         terminationGracePeriodSeconds: 30
         volumes:
         - configMap:
             defaultMode: 420
-            name: eventrouter-config
+            name: eventrouter-exporter-config
           name: config
     triggers:
     - type: ConfigChange

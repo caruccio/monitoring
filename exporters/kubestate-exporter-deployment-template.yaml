@@ -28,6 +28,11 @@ objects:
     type: ClusterIP
 
 - apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: kubestate-exporter
+
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
@@ -64,8 +69,8 @@ objects:
               cpu: 10m
               memory: 128Mi
         restartPolicy: Always
-        serviceAccount: prometheus
-        serviceAccountName: prometheus
+        serviceAccount: kubestate-exporter
+        serviceAccountName: kubestate-exporter
         terminationGracePeriodSeconds: 30
     triggers:
     - type: ConfigChange

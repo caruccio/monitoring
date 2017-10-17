@@ -11,7 +11,7 @@ objects:
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: prometheus-node-exporter
+    name: node-exporter
 
 - apiVersion: extensions/v1beta1
   kind: DaemonSet
@@ -67,8 +67,8 @@ objects:
         dnsPolicy: ClusterFirst
         hostNetwork: true
         restartPolicy: Always
-        serviceAccount: prometheus-node-exporter
-        serviceAccountName: prometheus-node-exporter
+        serviceAccount: node-exporter
+        serviceAccountName: node-exporter
         terminationGracePeriodSeconds: 30
     templateGeneration: 1
     updateStrategy:
