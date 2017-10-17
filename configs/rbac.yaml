@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: List
+
+- apiVersion: v1
+  kind: ClusterRole
+  metadata:
+    name: eventrouter-exporter
+  rules:
+  - apiGroups:
+    - ""
+    attributeRestrictions: null
+    resources:
+    - events
+    verbs:
+    - get
+    - list
+    - watch
+

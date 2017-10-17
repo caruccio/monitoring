@@ -27,9 +27,9 @@ Setup security policies.
 
 ```
 oc -n $NS adm policy add-cluster-role-to-user eventrouter-exporter -z eventrouter-exporter
-oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
 oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z kubestate-exporter
-oc -n $NS adm policy add-scc-to-user          privileged    -z prometheus-node-exporter
+oc -n $NS adm policy add-cluster-role-to-user cluster-reader -z prometheus
+oc -n default adm policy add-scc-to-user privileged -z node-exporter
 ```
 
 Create config files

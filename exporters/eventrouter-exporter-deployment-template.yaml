@@ -25,21 +25,6 @@ objects:
     type: ClusterIP
 
 - apiVersion: v1
-  kind: ClusterRole
-  metadata:
-    name: eventrouter-exporter
-  rules:
-  - apiGroups:
-    - ""
-    attributeRestrictions: null
-    resources:
-    - events
-    verbs:
-    - get
-    - list
-    - watch
-
-- apiVersion: v1
   kind: ServiceAccount
   metadata:
     name: eventrouter-exporter
