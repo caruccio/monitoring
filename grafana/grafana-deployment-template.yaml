@@ -30,6 +30,11 @@ objects:
     type: ClusterIP
 
 - apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: grafana
+
+- apiVersion: v1
   kind: Route
   metadata:
     labels:
