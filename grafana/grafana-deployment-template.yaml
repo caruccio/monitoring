@@ -62,13 +62,7 @@ objects:
       app: grafana
     strategy:
       activeDeadlineSeconds: 21600
-      rollingParams:
-        intervalSeconds: 1
-        maxSurge: 25%
-        maxUnavailable: 25%
-        timeoutSeconds: 600
-        updatePeriodSeconds: 1
-      type: Rolling
+      type: Recreate
     template:
       metadata:
         labels:
@@ -98,6 +92,8 @@ objects:
         serviceAccount: grafana
         serviceAccountName: grafana
         terminationGracePeriodSeconds: 30
+        securityContext:
+          runAsUser: 0
         volumes:
         - name: grafana-data
           persistentVolumeClaim:
