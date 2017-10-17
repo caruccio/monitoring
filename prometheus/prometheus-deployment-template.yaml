@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: prometheus-deployment-template
+
+parameters:
+- name: PROMETHEUS_IMAGE_VERSION
+  value: v1.7.2
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: prometheus
+    name: prometheus
+  spec:
+    ports:
+    - port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app: prometheus
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: prometheus
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: prometheus
+    name: prometheus
+  spec:
+    replicas: 1
+    selector:
+      app: prometheus
+    strategy:
+      activeDeadlineSeconds: 21600
+      recreateParams:
+        timeoutSeconds: 600
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: prometheus
+      spec:
+        containers:
+        - command:
+          - /bin/prometheus
+          - -log.level=info
+          - -config.file=/etc/prometheus/prometheus.yml
+          - -storage.local.path=/prometheus
+          - -web.console.libraries=/usr/share/prometheus/console_libraries
+          - -web.console.templates=/usr/share/prometheus/consoles
+          - -storage.local.target-heap-size=3221225472
+          - -alertmanager.url=http://alertmanager:9093
+          image: prom/prometheus:${PROMETHEUS_IMAGE_VERSION}
+          imagePullPolicy: IfNotPresent
+          name: prometheus
+          ports:
+          - containerPort: 9090
+            protocol: TCP
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: 100m
+              memory: 3Gi
+          volumeMounts:
+          - mountPath: /prometheus
+            name: prometheus-data
+          - mountPath: /etc/prometheus
+            name: prom-k8s
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: infra
+        restartPolicy: Always
+        serviceAccount: prometheus
+        serviceAccountName: prometheus
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: prom-k8s
+          name: prom-k8s
+        - name: prometheus-data
+          persistentVolumeClaim:
+            claimName: prometheus-data
+    triggers:
+    - type: ConfigChange

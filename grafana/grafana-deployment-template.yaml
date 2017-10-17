@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: grafana-deployment-template
+
+parameters:
+- name: GRAFANA_IMAGE_VERSION
+  value: 4.5.2
+- name: APPS_DOMAIN
+  required: true
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    labels:
+      app: grafana
+    name: grafana
+  spec:
+    ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: grafana
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: grafana
+    name: grafana
+  spec:
+    host: grafana.${APPS_DOMAIN}
+    port:
+      targetPort: http
+    to:
+      kind: Service
+      name: grafana
+      weight: 100
+    wildcardPolicy: None
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: grafana
+    name: grafana
+  spec:
+    replicas: 1
+    selector:
+      app: grafana
+    strategy:
+      activeDeadlineSeconds: 21600
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: grafana
+      spec:
+        containers:
+        - image: grafana/grafana:${GRAFANA_IMAGE_VERSION}
+          imagePullPolicy: IfNotPresent
+          name: grafana
+          ports:
+          - containerPort: 3000
+            protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
+          volumeMounts:
+          - mountPath: /etc/grafana
+            name: grafanaini
+          - mountPath: /var/lib/grafana
+            name: grafana-data-volume
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: infra
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: grafanaini
+          name: grafanaini
+        - name: grafana-data-volume
+          persistentVolumeClaim:
+            claimName: grafana-data
+    triggers:
+    - type: ConfigChange

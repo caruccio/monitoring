@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: alertmanager-deployment-template
+
+parameters:
+- name: ALERTMANAGER_IMAGE_VERSION
+  value: v0.8.0
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: alertmanager
+    name: alertmanager
+  spec:
+    ports:
+    - port: 9093
+      protocol: TCP
+      targetPort: 9093
+    selector:
+      app: alertmanager
+      deploymentconfig: alertmanager
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: alertmanager
+    name: alertmanager
+  spec:
+    replicas: 1
+    selector:
+      app: alertmanager
+      deploymentconfig: alertmanager
+    strategy:
+      activeDeadlineSeconds: 21600
+      recreateParams:
+        timeoutSeconds: 600
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: alertmanager
+          deploymentconfig: alertmanager
+      spec:
+        containers:
+        - name: alertmanager
+          image: quay.io/prometheus/alertmanager:${ALERTMANAGER_IMAGE_VERSION}
+          args:
+            - -config.file=/etc/prometheus/alertmanager.yml
+          imagePullPolicy: IfNotPresent
+          name: prometheus
+          ports:
+          - containerPort: 9093
+            protocol: TCP
+          resources:
+            limits:
+              cpu: "100m"
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 256Mi
+          volumeMounts:
+          - mountPath: /etc/prometheus
+            name: prom-alertmanager
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          role: infra
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: prom-alertmanager
+          name: prom-alertmanager
+    triggers:
+    - type: ConfigChange

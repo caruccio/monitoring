@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: proxy-config-template
+
+parameters:
+- name: PROXY_ADMIN_HTPASSWD_HASH
+  required: true
+
+objects:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: proxy-htpasswd
+  data:
+    .htpasswd-prometheus: |
+      ${PROXY_ADMIN_HTPASSWD_HASH}
+    .htpasswd-alertmanager: |
+      ${PROXY_ADMIN_HTPASSWD_HASH}

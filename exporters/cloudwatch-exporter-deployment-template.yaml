@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: cloudwatch-exporter-deployment-template
+
+parameters:
+- name: CLOUDWATCH_IMAGE_VERSION
+  value: latest
+- name: AWS_ACCESS_KEY_ID
+  required: true
+- name: AWS_SECRET_ACCESS_KEY
+  required: true
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      run: cloudwatch-exporter
+    name: cloudwatch-exporter
+  spec:
+    ports:
+    - port: 9106
+      protocol: TCP
+      targetPort: 9106
+    selector:
+      app: cloudwatch-exporter
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: cloudwatch-exporter
+    name: cloudwatch-exporter
+  spec:
+    replicas: 1
+    selector:
+      app: cloudwatch-exporter
+    strategy:
+    template:
+      metadata:
+        labels:
+          app: cloudwatch-exporter
+      spec:
+        containers:
+        - image: prom/cloudwatch-exporter:${CLOUDWATCH_IMAGE_VERSION}
+          imagePullPolicy: IfNotPresent
+          name: cloudwatch-exporter
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            value: "${AWS_ACCESS_KEY_ID}"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "${AWS_SECRET_ACCESS_KEY}"
+          ports:
+          - containerPort: 9106
+          resources:
+            limits:
+              cpu: 100m
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 256Mi
+          volumeMounts:
+          - mountPath: /config
+            name: config
+            readOnly: true
+        volumes:
+        - configMap:
+            name: cloudwatch-exporter
+          name: config

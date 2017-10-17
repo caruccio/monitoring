@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: kubestate-exporter-deployment-template
+
+parameters:
+- name: KUBESTATE_IMAGE_VERSION
+  value: v1.0.1
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+    labels:
+      app: kubestate-exporter
+    name: kubestate-exporter
+  spec:
+    ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: kubestate-exporter
+      deploymentconfig: kubestate-exporter
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: kubestate-exporter
+    name: kubestate-exporter
+  spec:
+    replicas: 1
+    selector:
+      app: kubestate-exporter
+      deploymentconfig: kubestate-exporter
+    strategy:
+      activeDeadlineSeconds: 1200
+      recreateParams:
+        timeoutSeconds: 600
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: kubestate-exporter
+          deploymentconfig: kubestate-exporter
+      spec:
+        containers:
+        - image: quay.io/coreos/kube-state-metrics:${KUBESTATE_IMAGE_VERSION}
+          imagePullPolicy: IfNotPresent
+          name: kubestate
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources:
+            limits:
+              cpu: 100
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+        nodeSelector:
+          role: infra
+        restartPolicy: Always
+        serviceAccount: prometheus
+        serviceAccountName: prometheus
+        terminationGracePeriodSeconds: 30
+    triggers:
+    - type: ConfigChange

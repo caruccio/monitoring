@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: eventrouter-deployment-template
+
+parameters:
+- name: EVENTROUTER_IMAGE_VERSION
+  value: v0.1
+
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+    name: eventrouter
+  spec:
+    ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: eventrouter
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: v1
+  kind: ClusterRole
+  metadata:
+    name: eventrouter
+  rules:
+  - apiGroups:
+    - ""
+    attributeRestrictions: null
+    resources:
+    - events
+    verbs:
+    - get
+    - list
+    - watch
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: eventrouter
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    app: eventrouter
+  spec:
+    replicas: 1
+    selector:
+      app: eventrouter
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: eventrouter
+      spec:
+        containers:
+        - image: gcr.io/heptio-images/eventrouter:${EVENTROUTER_IMAGE_VERSION}
+          imagePullPolicy: IfNotPresent
+          name: kube-eventrouter
+          resources:
+            limits:
+              cpu: 100
+              memory: 512Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/eventrouter
+            name: config
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        serviceAccount: eventrouter
+        serviceAccountName: eventrouter
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: eventrouter-config
+          name: config
+    triggers:
+    - type: ConfigChange
