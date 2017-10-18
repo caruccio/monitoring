@@ -419,7 +419,7 @@ objects:
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "master",
           severity="critical"
         }
         ANNOTATIONS {
@@ -431,7 +431,7 @@ objects:
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "master",
           severity="critical"
         }
         ANNOTATIONS {
@@ -443,7 +443,7 @@ objects:
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "master",
           severity="critical"
         }
         ANNOTATIONS {
@@ -488,36 +488,36 @@ objects:
           description = "{{$labels.instance}} ({{$labels.label_type}}): Memory usage is above 85% (current value is: {{ $value }})"
         }
 
-      ALERT NodeCPUUsage
+      ALERT NodeAppCPUUsage
         IF ((1 - (avg(irate(node_cpu{mode="idle", role="app"}[5m])) BY (instance))) * 100) > 85
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "app",
           severity="critical"
         }
         ANNOTATIONS {
           summary = "High CPU usage detected",
           description = "{{$labels.instance}} ({{$labels.label_type}}): CPU usage is above 85% (current value is: {{ $value }})"
         }
-      ALERT NodeLoadAverage
+      ALERT NodeAppLoadAverage
         IF node_load15{role="app"} / ON(server_name) group_right() machine_cpu_cores{role="app"} > 2
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "app",
           severity="critical"
         }
         ANNOTATIONS {
           summary = "High load average detected",
           description = "{{$labels.instance}} ({{$labels.label_type}}): load average (15) is high"
         }
-      ALERT NodeMemoryUsage
+      ALERT NodeAppMemoryUsage
         IF ((node_memory_MemTotal{role="app"} - node_memory_MemAvailable{role="app"}) / (node_memory_MemTotal{role="app"}) * 100) > 85
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
-          service = "infra",
+          service = "app",
           severity="critical"
         }
         ANNOTATIONS {
@@ -682,7 +682,7 @@ objects:
             action: replace
             regex: .*
             target_label: role
-            replacement: infra
+            replacement: router
 
         - job_name: "master-nodes"
           dns_sd_configs:
@@ -698,7 +698,7 @@ objects:
             action: replace
             regex: .*
             target_label: role
-            replacement: infra
+            replacement: master
 
         - job_name: "infra-nodes"
           dns_sd_configs:
