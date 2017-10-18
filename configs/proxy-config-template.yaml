@@ -13,9 +13,5 @@ objects:
   metadata:
     name: proxy-htpasswd
   data:
-    .htpasswd-prometheus: |
-      ${PROXY_ADMIN_HTPASSWD_HASH}
-    .htpasswd-grafana: |
-      ${PROXY_ADMIN_HTPASSWD_HASH}
-    .htpasswd-alertmanager: |
+    .htpasswd: |
       ${PROXY_ADMIN_HTPASSWD_HASH}
