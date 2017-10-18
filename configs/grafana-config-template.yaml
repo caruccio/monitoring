@@ -12,6 +12,8 @@ parameters:
 - name: GF_SECRET_KEY
   from: '[a-zA-Z0-9]{16}'
   generate: expression
+- name: APPS_DOMAIN
+  required: true
 
 objects:
 - apiVersion: v1
