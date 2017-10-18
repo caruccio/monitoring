@@ -15,5 +15,7 @@ objects:
   data:
     .htpasswd-prometheus: |
       ${PROXY_ADMIN_HTPASSWD_HASH}
+    .htpasswd-grafana: |
+      ${PROXY_ADMIN_HTPASSWD_HASH}
     .htpasswd-alertmanager: |
       ${PROXY_ADMIN_HTPASSWD_HASH}

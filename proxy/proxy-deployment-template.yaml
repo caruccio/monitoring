@@ -51,6 +51,26 @@ objects:
   metadata:
     labels:
       app: proxy
+    name: grafana
+  spec:
+    host: grafana.${APPS_DOMAIN}
+    port:
+      targetPort: http
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: proxy
+      weight: 100
+    wildcardPolicy: None
+
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: proxy
     name: alertmanager
   spec:
     host: alertmanager.${APPS_DOMAIN}

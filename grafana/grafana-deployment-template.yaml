@@ -35,22 +35,6 @@ objects:
     name: grafana
 
 - apiVersion: v1
-  kind: Route
-  metadata:
-    labels:
-      app: grafana
-    name: grafana
-  spec:
-    host: grafana.${APPS_DOMAIN}
-    port:
-      targetPort: http
-    to:
-      kind: Service
-      name: grafana
-      weight: 100
-    wildcardPolicy: None
-
-- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
@@ -70,6 +54,9 @@ objects:
       spec:
         containers:
         - image: grafana/grafana:${GRAFANA_IMAGE_VERSION}
+          env:
+          - name: APPS_DOMAIN
+            value: ${APPS_DOMAIN}
           imagePullPolicy: IfNotPresent
           name: grafana
           ports:

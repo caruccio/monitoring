@@ -93,5 +93,5 @@ oc -n $NS process -o yaml -f proxy/proxy-deployment-template.yaml \
     -p "PROXY_DEFAULT_ADMIN_PASSWORD=$PROXY_DEFAULT_ADMIN_PASSWORD" \
     | oc -n $NS create -f -
 
-oc label --list dc/proxy | grep PROXY_DEFAULT_ADMIN_PASSWORD
+oc -n $NS env --list dc/proxy | grep PROXY_DEFAULT_ADMIN_PASSWORD
 ```
