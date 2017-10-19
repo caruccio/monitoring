@@ -55,6 +55,7 @@ oc -n $NS process -o yaml -f configs/proxy-config-template.yaml \
     | oc -n $NS create -f -
 
 oc -n $NS process -o yaml -f configs/grafana-config-template.yaml \
+    -p APPS_DOMAIN=${APPS_DOMAIN} \
     | oc -n $NS create -f -
 
 oc -n $NS create -f configs/cloudwatch-exporter-config.yaml

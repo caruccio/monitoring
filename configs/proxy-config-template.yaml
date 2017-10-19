@@ -11,7 +11,13 @@ objects:
 - apiVersion: v1
   kind: ConfigMap
   metadata:
-    name: proxy-htpasswd
+    name: proxyconf
   data:
     .htpasswd: |
       ${PROXY_ADMIN_HTPASSWD_HASH}
+    grafana.pre: |
+      # placeholder
+    grafana.on: |
+      proxy_set_header X-Remote-User $remote_user;
+    grafana.post: |
+      # placeholder

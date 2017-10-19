@@ -131,15 +131,15 @@ objects:
               cpu: 10m
               memory: 128Mi
           volumeMounts:
-          - mountPath: /opt/app-root/auth
-            name: proxy-htpasswd
+          - mountPath: /opt/app-root/proxy
+            name: proxyconf
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         terminationGracePeriodSeconds: 30
         volumes:
         - configMap:
             defaultMode: 420
-            name: proxy-htpasswd
-          name: proxy-htpasswd
+            name: proxyconf
+          name: proxyconf
     triggers:
     - type: ConfigChange
