@@ -30,7 +30,7 @@ items:
     strategy:
       activeDeadlineSeconds: 600
       recreateParams:
-        timeoutSeconds: 600
+        timeoutSeconds: 300
       type: Recreate
     template:
       metadata:
