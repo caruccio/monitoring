@@ -240,7 +240,7 @@ objects:
         }
 
       ALERT K8SNodeNotReady
-        IF sum(kube_node_status_condition{condition="Ready", status=~"(false|unknown)"}) by (instance) > 0
+        IF sum(kube_node_status_condition{condition="Ready", status=~"(false|unknown)"}) by (node) > 0
         FOR 1m
         LABELS {
           cluster = "${CLUSTER_NAME}",
@@ -525,6 +525,17 @@ objects:
           description = "{{$labels.instance}} ({{$labels.label_type}}): Memory usage is above 85% (current value is: {{ $value }})"
         }
 
+      ALERT TooManySystemOOM
+         IF irate(heptio_eventrouter_warnings_total{involved_object_kind="Node", reason="SystemOOM"}[10m]) * 100 > 5
+         FOR 1m
+         LABELS {
+          service = "node",
+          severity="warning"
+         }
+         ANNOTATIONS {
+           summary = "Too many dead containers",
+           dscription = "To many containers are dying by OOM on {{$labels.source}}"
+         }
       #ALERT NodeLowRootDisk
       #  IF (label_replace(max(((node_filesystem_size{fstype="rootfs"} - node_filesystem_free{fstype="rootfs"} ) / node_filesystem_size{fstype="rootfs"} * 100)) by(instance), "node", "$1", "instance", "(.*)") * on(node) group_right() kube_node_labels) > 80
       #  FOR 10m
