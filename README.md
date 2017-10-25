@@ -65,6 +65,8 @@ oc -n $NS create -f configs/eventrouter-exporter-config.yaml
 Deploy stuff
 
 ```
+oc -n $NS create -f pushgateway/pushgateway-deployment.yaml
+
 oc -n $NS process -o yaml -f exporters/node-exporter-deployment-template.yaml \
     | oc -n default create -f -
 

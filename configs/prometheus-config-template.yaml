@@ -591,6 +591,10 @@ objects:
             target_label: role
             replacement: prom
 
+        - job_name: pushgateway
+          static_configs:
+            - targets: ['pushgateway.monitoring.svc:9091']
+
         - job_name: aws
           static_configs:
             - targets: ['cloudwatch-exporter:9106']

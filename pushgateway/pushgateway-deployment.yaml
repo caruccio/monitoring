@@ -18,6 +18,25 @@ items:
     type: ClusterIP
 
 - apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      app: pushgateway
+    name: pushgateway
+  spec:
+    host: pushgateway.getup.io
+    port:
+      targetPort: http
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: proxy
+      weight: 100
+    wildcardPolicy: None
+
+- apiVersion: v1
   kind: DeploymentConfig
   metadata:
     labels:
