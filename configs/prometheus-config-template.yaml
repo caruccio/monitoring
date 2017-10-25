@@ -501,7 +501,7 @@ objects:
           description = "{{$labels.instance}} ({{$labels.label_type}}): CPU usage is above 85% (current value is: {{ $value }})"
         }
       ALERT NodeAppLoadAverage
-        IF node_load15{role="app"} / ON(server_name) group_right() machine_cpu_cores{role="app"} > 2
+        IF node_load15{role="app"} / ON(server_name) group_right() machine_cpu_cores{role="app"} > 5
         FOR 10m
         LABELS {
           cluster = "${CLUSTER_NAME}",
