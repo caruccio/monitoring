@@ -20,7 +20,7 @@ objects:
   data:
     docker.rules: |-
       ALERT DockerHasErrors
-        IF irate(kubelet_docker_operations_errors{operation_type!~"remove_container|start_container|inspect_container|inspect_image|inspect_exec|operation_type||logs"}[10m])  > 0
+        IF irate(kubelet_docker_operations_errors{operation_type!~"remove_container|start_container|inspect_container|inspect_image|inspect_exec|operation_type|logs"}[10m])  > 0
         FOR 5m
         LABELS {
           cluster = "${CLUSTER_NAME}",
@@ -43,6 +43,19 @@ objects:
         ANNOTATIONS {
           summary = "Docker Timeout",
           description = "Docker on {{ $labels.instance }} has timeouts",
+        }
+
+      ALERT DockerImagePullIsTakingTooLong
+        IF kubelet_docker_operations_latency_microseconds{operation_type="pull_image", quantile="0.9"} / 1000 / 1000 > 120
+        FOR 5m
+        LABELS {
+          cluster = "${CLUSTER_NAME}",
+          service = "docker",
+          severity = "warning",
+        }
+        ANNOTATIONS {
+          summary = "Docker Pull Too Long",
+          description = "Docker pull on {{ $labels.instance }} is taking too long to finish (>2m)",
         }
 
     kubernetes.rules: |
@@ -213,9 +226,31 @@ objects:
       cluster:scheduler_binding_latency:quantile_seconds{quantile="0.5"} =
         histogram_quantile(0.5,sum by (le,cluster) (scheduler_binding_latency_microseconds_bucket)) / 1e6
 
+      ### Haproxy ###
+      haproxy:response_errors_percent =
+        100 * sum(
+          haproxy_frontend_http_responses_total{code="5xx"}
+        ) / sum(
+          haproxy_frontend_http_responses_total{code=~"[1234]xx"}
+        )
+
+      ### Alerts ###
+      ALERT HaproxyErrorsTooHigh
+        IF haproxy:response_errors_percent > 25
+        FOR 5m
+        LABELS {
+          cluster = "${CLUSTER_NAME}",
+          service = "haproxy",
+          severity = "warning"
+        }
+        ANNOTATIONS {
+          summary = "Too many hapoxy errors ratio",
+          description = "Haproxy is returning too many 5xx errors (>25%)"
+        }
+
       ALERT K8SFailedSchedulingErrorTooHigh
         IF sum(rate(heptio_eventrouter_warnings_total{reason="FailedScheduling"}[5m])) > 0.1
-        FOR 5m
+        FOR 15m
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "k8s",
@@ -241,7 +276,7 @@ objects:
 
       ALERT K8SNodeNotReady
         IF sum(kube_node_status_condition{condition="Ready", status=~"(false|unknown)"}) by (node) > 0
-        FOR 1m
+        FOR 15m
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "k8s",
@@ -249,7 +284,7 @@ objects:
         }
         ANNOTATIONS {
           summary = "Node status is NotReady",
-          description = "The Kubelet on {{ $labels.node }} has not checked in with the API, or has set itself to NotReady, for more than 2 minutes",
+          description = "The Kubelet on {{ $labels.node }} has not checked in with the API, or has set itself to NotReady, for more than 15 minutes",
         }
 
       ALERT K8SKubeletNodeExporterDown
@@ -414,9 +449,22 @@ objects:
         }
 
     node.rules: |-
+      ALERT NodeDown
+        IF up{job=~"(master|infra|app)-nodes"} == 0
+        FOR 1h
+        LABELS {
+          cluster = "${CLUSTER_NAME}",
+          service = "k8s",
+          severity = "warning"
+        }
+        ANNOTATIONS {
+          summary = "Node cannot be scraped",
+          description = "Prometheus could not scrape a {{ $labels.job }} for more than one hour",
+        }
+
       ALERT MasterCPUUsage
         IF ((1 - (avg(irate(node_cpu{mode="idle", role="master"}[5m])) BY (instance))) * 100) > 85
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "master",
@@ -428,7 +476,7 @@ objects:
         }
       ALERT MasterLoadAverage
         IF node_load15{role="master"} / ON(server_name) group_right() machine_cpu_cores{role="master"} > 2
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "master",
@@ -453,7 +501,7 @@ objects:
 
       ALERT InfraCPUUsage
         IF ((1 - (avg(irate(node_cpu{mode="idle", role="infra"}[5m])) BY (instance))) * 100) > 85
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "infra",
@@ -465,7 +513,7 @@ objects:
         }
       ALERT InfraLoadAverage
         IF node_load15{role="infra"} / ON(server_name) group_right() machine_cpu_cores{role="infra"} > 2
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "infra",
@@ -490,7 +538,7 @@ objects:
 
       ALERT NodeAppCPUUsage
         IF ((1 - (avg(irate(node_cpu{mode="idle", role="app"}[5m])) BY (instance))) * 100) > 85
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "app",
@@ -502,7 +550,7 @@ objects:
         }
       ALERT NodeAppLoadAverage
         IF node_load15{role="app"} / ON(server_name) group_right() machine_cpu_cores{role="app"} > 5
-        FOR 10m
+        FOR 1h
         LABELS {
           cluster = "${CLUSTER_NAME}",
           service = "app",
@@ -592,6 +640,7 @@ objects:
             replacement: prom
 
         - job_name: pushgateway
+          honor_labels: true
           static_configs:
             - targets: ['pushgateway.monitoring.svc:9091']
 
@@ -634,19 +683,39 @@ objects:
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
 
-        - job_name: kubernetes-apiservers
+        - job_name: kubernetes-api
           scheme: https
           tls_config:
             ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          namespaces:
+            names:
+            - default
 
           kubernetes_sd_configs:
           - role: endpoints
 
           relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
+
+        - job_name: kubernetes-controllers
+          scheme: https
+          tls_config:
+            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          namespaces:
+            names:
+            - default
+
+          kubernetes_sd_configs:
+          - role: endpoints
+
+          relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: kubernetes-metrics;https
 
         - job_name: kubernetes-services
           kubernetes_sd_configs:
@@ -677,7 +746,7 @@ objects:
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
-          ## drop this taget since we cant scrap basic user/pass into labels
+          ## drop this taget since we cant scrape basic user/pass into labels
           ## https://github.com/prometheus/prometheus/issues/2614
           - source_labels: [__meta_kubernetes_service_name]
             action: drop
